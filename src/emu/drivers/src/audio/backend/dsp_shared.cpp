@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <common/time.h>
 #include <common/log.h>
 #include <drivers/audio/backend/dsp_shared.h>
 
@@ -24,7 +25,9 @@ namespace eka2l1::drivers {
     dsp_output_stream_shared::dsp_output_stream_shared(drivers::audio_driver *aud)
         : aud_(aud)
         , pointer_(0)
-        , virtual_stop(true) {
+        , virtual_stop(true)
+        , last_write_(0)
+        , last_callback_(0) {
         last_frame_[0] = 0;
         last_frame_[1] = 0;
     }
@@ -143,6 +146,10 @@ namespace eka2l1::drivers {
     }
 
     bool dsp_output_stream_shared::write(const std::uint8_t *data, const std::uint32_t data_size) {
+        std::uint64_t now = common::get_current_time_in_microseconds_since_1ad();
+        LOG_TRACE("Time between write = {}us", now - last_write_);
+        last_write_ = now;
+
         // Copy buffer to queue
         dsp_buffer buffer;
         buffer.resize(data_size);
@@ -156,6 +163,10 @@ namespace eka2l1::drivers {
     }
 
     std::size_t dsp_output_stream_shared::data_callback(std::int16_t *buffer, const std::size_t frame_count) {
+        std::uint64_t now = common::get_current_time_in_microseconds_since_1ad();
+        LOG_TRACE("Time between data callback = {}us", now - last_callback_);
+        last_callback_ = now;
+        
         std::size_t frame_wrote = 0;
 
         while (frame_wrote < frame_count) {

@@ -45,6 +45,9 @@ namespace eka2l1::drivers {
 
         bool virtual_stop;
 
+        std::uint64_t last_write_;
+        std::uint64_t last_callback_;
+
     public:
         explicit dsp_output_stream_shared(drivers::audio_driver *aud);
         ~dsp_output_stream_shared() override;
